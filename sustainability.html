@@ -54,8 +54,8 @@
 </div>
 
 <script>
-    // URL Raw GitHub (Pastikan link ini mengarah ke file CSV Anda secara langsung)
-    const csvUrl = 'https://raw.githubusercontent.com/dhy-519/cbn-crm-sustainability/blob/main/EOP_summary_JaTeng.csv';
+    // MENGGUNAKAN LINK RAW AGAR DATA CSV BISA TERBACA OLEH SCRIPT
+    const csvUrl = 'https://raw.githubusercontent.com/dhy-519/cbn-crm-sustainability/main/EOP_summary_JaTeng.csv';
 
     let globalPivotData = {};
     let globalPeriods = [];
@@ -76,8 +76,9 @@
                 showLoading(false);
             },
             error: function(err) {
-                alert("Gagal mengambil data dari GitHub. Pastikan branch 'main' dan nama file benar.");
+                alert("Gagal mengambil data dari GitHub. Pastikan file CSV tersedia di link tersebut.");
                 console.error(err);
+                showLoading(false);
             }
         });
     }
@@ -102,7 +103,6 @@
 
             pivot[vintage][period]++;
             
-            // Calculate column sum for percentages
             if (!colSums[period]) colSums[period] = 0;
             colSums[period]++;
         });
@@ -117,7 +117,6 @@
         const thead = document.getElementById('tableHead');
         const tbody = document.getElementById('tableBody');
 
-        // Render Header
         let headHtml = `<tr><th>Vintage \\ Period</th>`;
         globalPeriods.forEach(p => {
             headHtml += `<th>${p}</th>`;
@@ -125,7 +124,6 @@
         headHtml += `</tr>`;
         thead.innerHTML = headHtml;
 
-        // Render Body
         let bodyHtml = '';
         globalVintages.forEach(v => {
             bodyHtml += `<tr><td class="vintage-label">${v}</td>`;
@@ -146,7 +144,6 @@
     }
 
     function getHeatmapColor(value) {
-        // Memberikan warna heatmap sederhana (hijau untuk persentase tinggi)
         const intensity = Math.min(value * 5, 255); 
         return `rgba(40, 167, 69, ${value / 100})`;
     }
@@ -163,7 +160,6 @@
         }
     }
 
-    // Jalankan saat halaman dibuka
     fetchData();
 </script>
 
