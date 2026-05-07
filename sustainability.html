@@ -54,13 +54,11 @@
 </div>
 
 <script>
-    // MENGGUNAKAN LINK RAW AGAR DATA CSV BISA TERBACA OLEH SCRIPT
     const csvUrl = 'https://raw.githubusercontent.com/dhy-519/cbn-crm-sustainability/main/EOP_summary_JaTeng.csv';
 
     let globalPivotData = {};
     let globalPeriods = [];
     let globalVintages = [];
-    let globalColumnSums = {};
 
     async function fetchData() {
         showLoading(true);
@@ -87,7 +85,6 @@
         const pivot = {};
         const periodsSet = new Set();
         const vintagesSet = new Set();
-        const colSums = {};
 
         data.forEach(row => {
             const period = row['active_periode'];
@@ -102,15 +99,11 @@
             if (!pivot[vintage][period]) pivot[vintage][period] = 0;
 
             pivot[vintage][period]++;
-            
-            if (!colSums[period]) colSums[period] = 0;
-            colSums[period]++;
         });
 
         globalPivotData = pivot;
         globalPeriods = Array.from(periodsSet).sort();
         globalVintages = Array.from(vintagesSet).sort((a, b) => a - b);
-        globalColumnSums = colSums;
     }
 
     function renderTable(type) {
@@ -128,14 +121,27 @@
         globalVintages.forEach(v => {
             bodyHtml += `<tr><td class="vintage-label">${v}</td>`;
             globalPeriods.forEach(p => {
-                const val = globalPivotData[v][p] || 0;
-                if (type === 'absolute') {
-                    bodyHtml += `<td>${val.toLocaleString('id-ID')}</td>`;
+                const val = globalPivotData[v] && globalPivotData[v][p] ? globalPivotData[v][p] : 0;
+                
+                // Jika nilai 0, biarkan sel kosong agar bersih
+                if (val === 0) {
+                    bodyHtml += `<td></td>`;
                 } else {
-                    const total = globalColumnSums[p] || 1;
-                    const perc = ((val / total) * 100).toFixed(2);
-                    const color = getHeatmapColor(perc);
-                    bodyHtml += `<td style="background-color: ${color}">${perc}%</td>`;
+                    if (type === 'absolute') {
+                        bodyHtml += `<td>${val.toLocaleString('id-ID')}</td>`;
+                    } else {
+                        // Ambil nilai dasar (Vintage 0) untuk kolom/periode ini
+                        const baseVal = globalPivotData[0] && globalPivotData[0][p] ? globalPivotData[0][p] : 0;
+                        
+                        if (baseVal === 0) {
+                            bodyHtml += `<td></td>`;
+                        } else {
+                            // Hitung persentase berdasarkan Vintage 0
+                            const perc = ((val / baseVal) * 100).toFixed(2);
+                            const color = getHeatmapColor(perc);
+                            bodyHtml += `<td style="background-color: ${color}">${perc}%</td>`;
+                        }
+                    }
                 }
             });
             bodyHtml += `</tr>`;
@@ -144,8 +150,9 @@
     }
 
     function getHeatmapColor(value) {
-        const intensity = Math.min(value * 5, 255); 
-        return `rgba(40, 167, 69, ${value / 100})`;
+        // Menggunakan opasitas maksimal 0.8 agar teks hitam tetap terbaca
+        const opacity = Math.min(value / 100, 0.8);
+        return `rgba(40, 167, 69, ${opacity})`;
     }
 
     function showLoading(isLoading) {
